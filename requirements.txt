@@ -1,0 +1,7 @@
+Cython==0.29.22
+gensim==3.8.3
+javalang==0.13.0
+numpy==1.20.1
+scipy==1.6.1
+six==1.15.0
+smart-open==4.2.0
