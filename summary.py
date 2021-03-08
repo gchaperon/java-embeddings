@@ -50,15 +50,17 @@ def init_worker():
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 
-def summary(tar_path):
+def summary(tar_path, processes, chunksize):
     """Process every .java file found in tar and extract aggregated info"""
     summary_data = [0] * len(Data._fields)
     try:
-        with tarfile.open(tar_path) as tar, Pool(initializer=init_worker) as pool:
+        with tarfile.open(tar_path) as tar, Pool(
+            processes, initializer=init_worker
+        ) as pool:
             for file_data in pool.imap(
                 process_source_code,
                 extract_java_files(tar),
-                chunksize=100,
+                chunksize=chunksize,
             ):
                 for i, field in enumerate(file_data):
                     summary_data[i] += field
@@ -70,6 +72,16 @@ def summary(tar_path):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--tar-path", help="the path of the java-large tar file")
+    parser.add_argument("file", help="the java-large tar file")
+    parser.add_argument(
+        "--num-workers",
+        default=None,
+        help="number of workers for tokenization, defaults to the number of cores",
+    )
+    parser.add_argument(
+        "--chunksize",
+        default=100,
+        help="number of files in each batch sent to workers, default 100",
+    )
     args = parser.parse_args()
-    print(json.dumps(summary(args.tar_path), indent=2))
+    print(json.dumps(summary(args.file, args.num_workers, args.chunksize), indent=2))
